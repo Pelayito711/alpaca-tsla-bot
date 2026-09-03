@@ -1,0 +1,39 @@
+name: Bot de Trading Auto-Correctivo Tesla (TSLA)
+on:
+  schedule:
+    - cron: '*/5 13-20 * * 1-5'
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  run-tsla-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar Código del Repositorio
+        uses: actions/checkout@v4
+      - name: Configurar Entorno Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Instalar Dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Ejecutar Auto-Optimizador Semanal (Domingos)
+        if: github.event.schedule == '0 0 * * 0'
+        run: python optimize_tsla.py
+      - name: Ejecutar Bot de Trading TSLA (Lunes a Viernes o Manual)
+        if: github.event.schedule != '0 0 * * 0'
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_BASE_URL: ${{ secrets.ALPACA_BASE_URL || 'https://paper-api.alpaca.markets' }}
+        run: python tsla_bot.py
+      - name: Guardar Parámetros Optimizados y Estado
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add config.json last_trade.json || true
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-actualización de parámetros TSLA [skip ci]"
+          git push || true
