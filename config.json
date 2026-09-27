@@ -1,6 +1,6 @@
 {
   "ticker": "TSLA",
-  "r_factor": 2.5,
+  "r_factor": 1.75,
   "risk_per_trade_pct": 2.0,
   "session_start_est": "09:30",
   "session_range_end_est": "09:45",
